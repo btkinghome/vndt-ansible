@@ -1,0 +1,33 @@
+---
+- name: Register redis info
+  ansible.builtin.set_fact:
+    svc: "{{ item }}"
+  when: item.name == "redis"
+  loop: "{{ services }}"
+
+- name: Load {{ svc.name }} vars
+  include_vars: "vars/{{ svc.version }}.yml"
+
+- name: Make redis yml
+  ansible.builtin.template:
+    src: redis-values.yml.j2
+    dest: "{{ role_path }}/templates/redis-values.yml"
+    mode: '0644'
+
+- name: Deploy redis from local file.
+  kubernetes.core.helm:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    name: redis
+    namespace: redis
+    create_namespace: true
+    chart_ref: "{{ role_path }}/files/redis-18.11.0.tgz"
+    values_files:
+      - "{{ role_path }}/templates/redis-values.yml"
+
+- name: Deploy redis master check
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    namespace: redis
+    state: present
+    src: "{{ role_path }}/templates/redis-master-monitor.yaml"

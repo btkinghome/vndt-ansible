@@ -1,0 +1,42 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:  
+  name: init-apps-pgsql-sql
+spec:  
+  # ttlSecondsAfterFinished: 30
+  template:  
+    spec:  
+      nodeSelector:
+        kubernetes.io/hostname: master1
+      securityContext:
+        runAsUser: 1001
+        fsGroup: 1001
+      restartPolicy: Never
+      containers:  
+      - name: init-pgsql-container
+        image: ailpha-registry:5000/{{ images.pgclient }}
+        command: 
+        - /bin/sh
+        - -c
+        - |
+          for i in $(ls /data/scripts);do
+            psql -U $PGSQL_SERVICE_USER -h $PGSQL_SERVICE_HOST -d postgres -f /data/scripts/$i
+          done
+        env:  
+        - name: PGPASSWORD
+          value: {{ svc.config.password }}
+        - name: PGSQL_SERVICE_HOST
+          value: pgsql.postgresql
+        - name: PGSQL_SERVICE_USER
+          value: dbapp
+        volumeMounts:  
+        - name: scripts
+          mountPath: "/data/scripts"  
+          readOnly: true  
+      volumes:  
+      - name: scripts
+        hostPath:  
+          path: "/etc/ansible/roles/postgresql/files/db_init"
+          type: Directory
+  backoffLimit: 20

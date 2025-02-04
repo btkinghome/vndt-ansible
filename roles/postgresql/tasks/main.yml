@@ -1,0 +1,98 @@
+---
+- name: Register postgresql info
+  ansible.builtin.set_fact:
+    svc: "{{ item }}"
+  when: item.name == "postgresql"
+  loop: "{{ services }}"
+
+- name: Load vars {{ svc.name }}
+  ansible.builtin.include_vars: "vars/{{ svc.version }}.yml"
+
+- name: Make postgresql operator yml
+  ansible.builtin.template:
+    src: postgresql-operator-values.yaml.j2
+    dest: "{{ role_path }}/templates/postgresql-operator-values.yaml"
+    mode: '0644'
+
+- name: Make postgresql cluster yml
+  ansible.builtin.template:
+    src: postgresql.yaml.j2
+    dest: "{{ role_path }}/templates/postgresql.yaml"
+    mode: '0644'
+
+# tasks file for postgresql
+- name: Deploy postgresql operator
+  kubernetes.core.helm:
+    # state: absent
+    kubeconfig: "{{ kubeconfig }}"
+    name: postgresql-operator
+    chart_ref: "{{ role_path }}/files/pgo-5.6.1-2.tgz"
+    release_namespace: postgresql
+    create_namespace: true
+    values_files:
+      - "{{ role_path }}/templates/postgresql-operator-values.yaml"
+    wait: true
+  delegate_to: localhost
+
+
+- name: Install postgresql cluster
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    namespace: postgresql
+    state: present
+    src: "{{ role_path }}/templates/postgresql.yaml"
+  delegate_to: localhost
+
+- name: Get postgrsql secret
+  kubernetes.core.k8s_info:
+    kind: Secret
+    namespace: postgresql
+    name: pgsql-pguser-dbapp
+    kubeconfig: "{{ kubeconfig }}"
+  register: pg_secret
+  until: pg_secret.resources | length > 0
+  retries: 20
+  delay: 3
+  delegate_to: localhost
+
+- name: Patch postgresql password
+  kubernetes.core.k8s_json_patch:
+    kubeconfig: "{{ kubeconfig }}"
+    kind: Secret
+    namespace: postgresql
+    name: pgsql-pguser-dbapp
+    patch:
+      - op: add
+        path: /data/password
+        value: "{{ svc.config.password | b64encode }}"
+      - op: add
+        path: /data/verifier
+        value: ""
+  delegate_to: localhost
+
+- name: expose postgresql port with ClusterIP                            
+  kubernetes.core.k8s_service:               
+    type: ClusterIP               
+    state: present                     
+    kubeconfig: "{{ kubeconfig }}"
+    name: pgsql                        
+    namespace: postgresql
+    ports:               
+    - port: 5432   
+      protocol: TCP
+    selector:                                       
+      postgres-operator.crunchydata.com/role: master
+
+- name: Check file is existed in the path
+  ansible.builtin.stat:
+    path: /etc/ansible/roles/postgresql/files/db_init
+  register: db_init
+
+- name: Initialize db scripts {{ svc.name }}
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    name: "init-apps-{{ svc.name }}"
+    namespace: "{{ svc.name }}"
+    template: "init-apps.yml.j2"
+  when: db_init.stat.exists and db_init.stat.isdir

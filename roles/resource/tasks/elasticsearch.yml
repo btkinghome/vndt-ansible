@@ -1,0 +1,62 @@
+- name: Register elasticsearch info
+  ansible.builtin.set_fact:
+    svc: "{{ item }}"
+  when: item.name == "elasticsearch"
+  loop: "{{ services_list }}"
+
+- block:
+  - name: set fact minimal memory
+    ansible.builtin.set_fact:
+      minimal_instance_memory: 2
+
+  - name: set fact maxmal memory Gi
+    ansible.builtin.set_fact:
+      maxmal_instance_memory: 62
+
+  - name: set fact memory percent
+    ansible.builtin.set_fact:
+      memory_percent: 0.0625
+
+  - name: update memory percent
+    ansible.builtin.set_fact:
+      memory_percent: "{{ svc.deploy.memory_percent | float }}"
+    when: svc is defined and svc.deploy.memory_percent is defined
+
+  - name: Set service name.
+    ansible.builtin.set_fact:
+      service_name: "elasticsearch"
+      new_memory: "{{ [([(hosts_min_memory | float / 1024 * (memory_percent|float)),(minimal_instance_memory|float)] | max),(maxmal_instance_memory|float)] | min }}Gi"
+      # instance_number: "{{ hosts_count | int * 3  }}"
+      # 如果host_count为偶数，则master_number=hosts_count - 1，否则master_number=hosts_count
+      master_number: "{{ [(hosts_count | int -1 if hosts_count | int % 2 == 0 else hosts_count | int ), 3] | min }}"
+      # 如何host_count>3，则data_number=hosts_count * 3 - 3，否则data_number=hosts_count * 2
+      data_number: "{{ hosts_count | int * 3 - 3 if hosts_count | int > 3 else hosts_count | int * 2 }}"
+
+  - name: update instance_number when taint set
+    ansible.builtin.set_fact:
+      master_number: 3
+      data_number: 3
+    when: TAINT.worker | bool
+
+  - name: Set new memory.
+    ansible.builtin.set_fact:
+      # instance_number: "{{ hosts_count }}"
+      # master_number: "{{ [(hosts_count | int),3] | min }}"
+      data_number: "{{ hosts_count | int - 3 }}"
+      new_memory: "{{ [(hosts_min_memory | float / 1024 * (memory_percent|float)),(minimal_instance_memory|float)] | max }}Gi"
+    when: hosts_min_memory | int  < 128000
+
+  - name: Remove elasticsearch service
+    ansible.builtin.set_fact:
+      services_list: "{{ services_list | rejectattr('name', 'equalto', service_name) | list }}"
+    when: service_name is defined
+
+  - name: Set update service
+    ansible.builtin.set_fact:
+      services_list: "{{ services_list + [item | combine({'deploy':{'replicas': {'master': master_number | int, 'data': data_number | int}, 'memory': new_memory, 'memory_percent': memory_percent|float}}, recursive=true)] }}"
+    when: item.name == service_name
+    loop: "{{ services_data.services }}"
+  # - name: Debug services list
+  #   ansible.builtin.debug:
+  #     var: services_list
+  when: svc is defined

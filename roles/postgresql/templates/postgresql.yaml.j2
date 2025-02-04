@@ -1,0 +1,65 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: pgsql
+spec:
+  postgresVersion: 16
+  instances:
+    - name: "cluster"
+      replicas: {{ svc.deploy.replicas | int }}
+      dataVolumeClaimSpec:
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "10Gi"
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "{{ ((svc.deploy.memory | replace('Gi','')) | float  * 2048) | int | default(1024) }}Mi"
+        requests:
+          cpu: "500m"
+          memory: "{{ ((svc.deploy.memory | replace('Gi','')) | float  * 1024) | int | default(512) }}Mi"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                  postgres-operator.crunchydata.com/cluster: pgsql
+                  postgres-operator.crunchydata.com/instance-set: cluster
+# enable backups
+#  backups:
+#    pgbackrest:
+#      image: "ailpha-registry:5000/{{ images.pgbackrest }}"
+#      repos:
+#      - name: repo1
+#        volume:
+#          volumeClaimSpec:
+#            accessModes:
+#            - "ReadWriteOnce"
+#            resources:
+#              requests:
+#                storage: "10Gi"
+  patroni:
+    dynamicConfiguration:
+      postgresql:
+        parameters:
+          max_connections: 1024
+          reserved_connections: 1
+          ssl: false
+          max_wal_size: 2048
+          min_wal_size: 1024
+          wal_keep_size: 1024
+        pg_hba:
+        - host all all 0.0.0.0/0 md5
+  users:
+    - databases:
+      - nacos
+      - postgres
+      name: dbapp
+      options: SUPERUSER
+    - name: developer
+      options: 'CREATEDB'
+  service:
+    type: ClusterIP

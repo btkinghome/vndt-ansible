@@ -1,0 +1,27 @@
+---
+# tasks file for rabbitmq
+- name: Register postgresql info
+  ansible.builtin.set_fact:
+    svc: "{{ item }}"
+  when: item.name == "rabbitmq"
+  loop: "{{ services }}"
+
+- name: Load {{ svc.name }} vars
+  include_vars: "vars/{{ svc.version }}.yml"
+
+- name: Deploy rabbitmq chart.
+  kubernetes.core.helm:
+    kubeconfig: "{{ kubeconfig }}"
+    name: rabbitmq
+    release_namespace: rabbitmq
+    chart_ref: "{{ role_path }}/files/rabbitmq-14.4.6.tgz"
+    create_namespace: true
+    values_files:
+      - "{{ role_path }}/templates/values.yaml"
+    set_values:
+      - value: "image.registry={{ registry_server }}"
+        value_type: string
+      - value: "image.repository={{ images.rabbitmq | split(':') | first }}"
+        value_type: string
+      - value: "image.tag={{ images.rabbitmq | split(':') | last }}"
+        value_type: string

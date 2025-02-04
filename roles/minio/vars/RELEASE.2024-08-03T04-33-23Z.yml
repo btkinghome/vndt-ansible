@@ -1,0 +1,5 @@
+images:
+  minio: k8s/minio/minio:RELEASE.2024-08-03T04-33-23Z
+  operator: k8s/minio/operator:v6.0.1
+  operator-sidecar: k8s/minio/operator-sidecar:v6.0.0
+  mc: k8s/minio/mc:RELEASE.2024-07-31T15-58-33Z

@@ -1,0 +1,40 @@
+# tasks file for resource
+
+- name: Debug hosts_min_memory
+  ansible.builtin.debug:
+    var: hosts_min_memory
+
+- name: Read the JSON file into a variable
+  ansible.builtin.set_fact:
+    services_data: "{{ lookup('file', resource_file) | from_json }}"
+
+- name: Set services roles_list
+  ansible.builtin.set_fact:
+    services_list: "{{ services_data.services | list }}"
+
+- name: Set cluster_type
+  ansible.builtin.set_fact:
+    services_data: "{{ services_data | combine({'clusters': {'type': 'low'}}, recursive=true) }}"
+  when: hosts_min_memory | int < 128000
+
+- name: Update multiple services info
+  ansible.builtin.include_tasks: "{{ item.name }}.yml"
+  when:
+    - item is defined
+    - item.type == 'midware'
+    - item.name in ['clickhouse','elasticsearch','etcd','highgo','kafka','minio','nacos','postgresql','redis','zookeeper',"nebula","tdengine","mysql"]
+  with_items: "{{ services_list }}"
+
+- name: Debug services_list
+  ansible.builtin.debug:
+    var: services_list
+
+- name: Set services_data
+  ansible.builtin.set_fact:
+    services_data: "{{ services_data | combine({'services': services_list}, recursive=true) }}"
+
+- name: Write the updated JSON data back to the file
+  ansible.builtin.copy:
+    content: "{{ services_data | to_nice_json }}"
+    dest: "{{ resource_file }}"
+    mode: '0644'

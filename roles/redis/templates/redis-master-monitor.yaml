@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis-sentinel-monitor
+  name: redis-sentinel-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-sentinel-monitor
+  template:
+    metadata:
+      labels:
+        app: redis-sentinel-monitor
+    spec:
+      serviceAccountName: redis-monitor
+      containers:
+      - env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: REDIS_STS_NAME
+          value: "redis-node"
+        - name: SENTINEL_ADDR
+          value: "redis-headless.redis:26379"
+        - name: MASTER_NAME
+          value: "mymaster"
+        - name: REDIS_SERVICE_NAME
+          value: "redis.redis"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef: 
+              name: redis
+              key: redis-password
+        - name: SENTINEL_PASSWORD
+          valueFrom:
+            secretKeyRef: 
+              name: redis
+              key: redis-password
+        image: ailpha-registry:5000/k8s/redis/redis-sentinel-monitor:v1.7
+        name: redis-sentinel-monitor
+        command:
+        - "sh"
+        - "-c"
+        - "redis-sentinel-monitor --sentinels ${SENTINEL_ADDR} --master-name ${MASTER_NAME} --password ${REDIS_PASSWORD} --sentinel-password ${SENTINEL_PASSWORD}"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: redis-monitor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: redis-monitor
+rules:
+  - apiGroups:
+      - ""
+      - "apps"
+    resources:
+      - pods
+      - statefulsets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: redis-monitor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: redis-monitor
+subjects:
+  - kind: ServiceAccount
+    name: redis-monitor
+    # 默认namespace redis
+    namespace: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis-master
+  name: redis-master
+spec:
+  type: ClusterIP
+  ports:
+  - name: redis
+    port: 6379
+    protocol: TCP
+  selector:
+    redis-role: master

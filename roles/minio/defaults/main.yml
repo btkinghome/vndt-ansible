@@ -1,0 +1,13 @@
+---
+# defaults file for tdengine
+registry_server: "{% if registry_external_enable == 'true' -%}
+                  {{ registry_external_dns }}
+                  {%- else -%}
+                  ailpha-registry:5000
+                  {%- endif %}"
+
+registry_server_ip: "{% if registry_external_enable == 'true' -%}
+                     {{ registry_external_ip }}
+                     {%- else -%}
+                     {{ groups['master'][0] }}
+                     {%- endif %}"

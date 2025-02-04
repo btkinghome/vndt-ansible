@@ -1,0 +1,59 @@
+---
+- name: Register minio info
+  ansible.builtin.set_fact:
+    svc: "{{ item }}"
+  when: item.name == "minio"
+  loop: "{{ services }}"
+
+- name: Load {{ svc.name }} vars
+  include_vars: "vars/{{ svc.version }}.yml"
+
+- name: Make minio yml
+  ansible.builtin.template:
+    src: tenant-values.yaml.j2
+    dest: "{{ role_path }}/templates/tenant-values.yaml"
+    mode: '0644'
+
+- name: Deploy minio-operator from local file.
+  kubernetes.core.helm:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    name: minio-operator
+    namespace: minio
+    create_namespace: true
+    chart_ref: "{{ role_path }}/files/minio-operator-6.0.1.tgz"
+    values_files:
+      - "{{ role_path }}/templates/minio-operator-values.yaml"
+    wait: true
+
+- name: Deploy minio from local file.
+  kubernetes.core.helm:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    name: minio
+    namespace: minio
+    create_namespace: true
+    chart_ref: "{{ role_path }}/files/tenant-6.0.1.tgz"
+    values_files:
+      - "{{ role_path }}/templates/tenant-values.yaml"
+
+- name: get minio secrets
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeconfig }}"
+    namespace: minio
+    kind: Secret
+    name: myminio-env-configuration
+  register: minio_secrets
+
+- name: use base64 decode to get minio password
+  ansible.builtin.shell:
+    cmd: "echo {{ minio_secrets.resources[0]['data']['config.env'] }} | base64 -d | grep MINIO_ROOT_PASSWORD | awk -F '\"' '{print $2}'"
+  register: minio_root_password
+
+- name: Initialize {{ svc.name }} db scripts
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    name: "init-apps-{{ svc.name }}"
+    namespace: "{{ svc.name }}"
+    template: "init-apps.yml.j2"

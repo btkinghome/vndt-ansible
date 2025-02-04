@@ -1,0 +1,34 @@
+---
+# controllerImages are used to run the operator's controllers.
+# The cluster image defined below runs the PostgresCluster and PGUpgrade controllers.
+controllerImages:
+  cluster: ailpha-registry:5000/{{ images.operator }}
+
+# relatedImages are used when an image is omitted from PostgresCluster, PGAdmin or PGUpgrade specs.
+relatedImages:
+  postgres_16:
+    image:  ailpha-registry:5000/{{ images.postgres }}
+  pgbackrest:
+    image: ailpha-registry:5000/{{ images.pgbackrest }}
+
+# singleNamespace controls where PGO watches for PostgresClusters. When false,
+# PGO watches for and responds to PostgresClusters in all namespaces. When true,
+# PGO watches only the namespace in which it is installed.
+singleNamespace: false
+
+# debug allows you to enable or disable the "debug" level of logging.
+debug: true
+
+# imagePullSecretNames is a list of secret names to use for pulling controller images.
+# More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+imagePullSecretNames: []
+
+# Resource configuration of the PostgresCluster and PGUpgrade controllers.
+resources:
+  controller: {}
+
+# Define custom labels for PGO pods
+# Note: Defining labels that overlap with any Crunchy Data label, for example,
+# postgres-operator.crunchydata.com, will cause an error
+# customPodLabels:
+#  example.com: custom-label

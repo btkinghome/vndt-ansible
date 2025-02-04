@@ -1,0 +1,59 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:  
+  name: init-minio-resource-file
+spec:  
+  # ttlSecondsAfterFinished: 30
+  template:  
+    spec:  
+      nodeSelector:
+        kubernetes.io/hostname: master1
+      restartPolicy: Never
+      containers:  
+      - name: init-minio-resource-file
+        image: ailpha-registry:5000/k8s/minio/mc:RELEASE.2024-07-31T15-58-33Z
+        command: 
+        - /bin/sh
+        - -c
+        - |
+          mc config host add minio http://$MINIO_HOST:$MINIO_PORT $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+          command_execute_result=$?
+          if [ $command_execute_result -ne 0 ]; then
+            echo "mc config host add minio http://$MINIO_HOST:$MINIO_PORT $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD failed"
+            exit 1
+          fi
+
+          mc version info minio/resources
+          command_execute_result=$?
+
+          if [ $command_execute_result -ne 0 ]; then
+            mc mb minio/resources
+          fi
+          
+          mc cp --recursive /data/resources/ minio/resources/
+          command_execute_result=$?
+          if [ $command_execute_result -ne 0 ]; then
+            echo "mc cp --recursive /data/resources/ minio/resources/ failed"
+            exit 1
+          fi
+          
+        env: 
+        - name: MINIO_HOST
+          value: minio-hl.minio
+        - name: MINIO_PORT
+          value: "9000"
+        - name: MINIO_ROOT_USER
+          value: minio
+        - name: MINIO_ROOT_PASSWORD
+          value: '{{ minio_root_password.stdout }}'
+        volumeMounts:  
+        - name: scripts
+          mountPath: "/data/resources"  
+          readOnly: true  
+      volumes:  
+      - name: scripts
+        hostPath:  
+          path: "/etc/ansible/roles/minio/files/resources"
+          type: Directory
+  backoffLimit: 20

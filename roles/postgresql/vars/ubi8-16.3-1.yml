@@ -1,0 +1,6 @@
+# vars file for postgresql
+images:
+  operator: k8s/postgresql/postgres-operator:ubi8-5.7.0-0
+  pgbackrest: k8s/postgresql/crunchy-pgbackrest:ubi8-2.51-1
+  postgres: k8s/postgresql/crunchy-postgres:ubi8-16.3-1
+  pgclient: k8s/nacos/psql:14.11
