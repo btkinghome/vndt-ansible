@@ -9,7 +9,7 @@ tenant:
   configuration:
     name: myminio-env-configuration
   pools:
-    - servers: {% if groups["master"] | length > 1 and loadbalancer_ip_pools is defined %}3{%else%}1{%endif%}  
+    - servers: {% if groups["kube_master"] | length > 1 and loadbalancer_ip_pools is defined %}3{%else%}1{%endif%}  
       name: pool-1
       volumesPerServer: 4
       size: 100Gi
