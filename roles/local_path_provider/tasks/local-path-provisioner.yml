@@ -1,7 +1,7 @@
 ---
 
 - name: Load local-path-provisioner vars
-  include_vars: "vars/{{ KUBERNETES.plugin.csi.version }}.yml"
+  include_vars: "vars/v0.0.25-dev.yml"
 
 - name: Deploy local-path-provisioner from local file.
   kubernetes.core.helm:
