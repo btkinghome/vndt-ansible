@@ -1,0 +1,25 @@
+---
+
+- name: Load local-path-provisioner vars
+  include_vars: "vars/{{ KUBERNETES.plugin.csi.version }}.yml"
+
+- name: Deploy local-path-provisioner from local file.
+  kubernetes.core.helm:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    name: local-path-provisioner
+    namespace: local-path-provisioner
+    create_namespace: true
+    chart_ref: "{{ role_path }}/files/charts/local-path-provisioner.tgz"
+    values_files:
+      - "{{ role_path }}/templates/localpath-values.yaml"
+    set_values:
+      - value: image.repository={{ registry_server }}/{{images.local_path_provisioner | split(':') | first}}
+        value_type: string
+      - value: image.tag={{images.local_path_provisioner | split(':') | last}}
+        value_type: string
+      - value: helperImage.repository={{ registry_server }}/{{images.busybox | split(':') | first}}
+        value_type: string
+      - value: helperImage.tag={{images.busybox | split(':') | last}}
+        value_type: string
+  delegate_to: localhost

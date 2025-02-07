@@ -1,0 +1,19 @@
+---
+# defaults file for tdengine
+registry_server: "{% if registry_external_enable == 'true' -%}
+                  {{ registry_external_dns }}
+                  {%- else -%}
+                  easzlab.io.local:5000
+                  {%- endif %}"
+
+registry_server_ip: "{% if registry_external_enable == 'true' -%}
+                     {{ registry_external_ip }}
+                     {%- else -%}
+                     {{ groups['kube_master'][0] }}
+                     {%- endif %}"
+                     
+local_path_provisioner_name: local-path-provisioner
+local_path_provisioner_namespace: local-path-provisioner
+local_path_provisioner_image_repository: "{{ registry_server }}/rancher/local-path-provisioner"
+local_path_provisioner_helper_image_repository: "{{ registry_server }}/busybox"
+

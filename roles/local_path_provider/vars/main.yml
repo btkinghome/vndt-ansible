@@ -1,0 +1,15 @@
+---
+registry_server: "{% if registry_external_enable == 'true' -%}
+                  {{ registry_external_dns }}
+                  {%- else -%}
+                  easzlab.io.local:5000
+                  {%- endif %}"
+
+registry_server_ip: "{% if registry_external_enable == 'true' -%}
+                     {{ registry_external_ip }}
+                     {%- else -%}
+                     {{ groups['kube_master'][0] }}
+                     {%- endif %}"
+
+kubernetes_addons_dir: "/etc/kubernetes/addons"
+
