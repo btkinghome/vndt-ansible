@@ -1,0 +1,8 @@
+- name: Install addons on kubernetes
+  gather_facts: false
+  hosts: localhost
+  become: true
+  vars:
+    kubeconfig: "/root/.kube/config"
+  roles:
+  - local_path_provider
