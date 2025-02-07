@@ -73,3 +73,7 @@ k8s_nodename=''
 
 # Default python interpreter
 ansible_python_interpreter=/usr/bin/python3
+
+
+
+registry_external_enable=false

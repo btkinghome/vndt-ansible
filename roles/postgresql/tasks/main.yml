@@ -47,7 +47,7 @@
   kubernetes.core.k8s_info:
     kind: Secret
     namespace: postgresql
-    name: pgsql-pguser-dbapp
+    name: pgsql-pguser-hzda
     kubeconfig: "{{ kubeconfig }}"
   register: pg_secret
   until: pg_secret.resources | length > 0
@@ -60,7 +60,7 @@
     kubeconfig: "{{ kubeconfig }}"
     kind: Secret
     namespace: postgresql
-    name: pgsql-pguser-dbapp
+    name: pgsql-pguser-hzda
     patch:
       - op: add
         path: /data/password
