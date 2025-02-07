@@ -2,14 +2,14 @@
 # controllerImages are used to run the operator's controllers.
 # The cluster image defined below runs the PostgresCluster and PGUpgrade controllers.
 controllerImages:
-  cluster: ailpha-registry:5000/{{ images.operator }}
+  cluster: easzlab.io.local:5000/{{ images.operator }}
 
 # relatedImages are used when an image is omitted from PostgresCluster, PGAdmin or PGUpgrade specs.
 relatedImages:
   postgres_16:
-    image:  ailpha-registry:5000/{{ images.postgres }}
+    image:  easzlab.io.local:5000/{{ images.postgres }}
   pgbackrest:
-    image: ailpha-registry:5000/{{ images.pgbackrest }}
+    image: easzlab.io.local:5000/{{ images.pgbackrest }}
 
 # singleNamespace controls where PGO watches for PostgresClusters. When false,
 # PGO watches for and responds to PostgresClusters in all namespaces. When true,

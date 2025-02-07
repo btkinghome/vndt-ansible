@@ -1,0 +1,18 @@
+- name: Collect facts
+  hosts: all
+  gather_facts: true
+  tasks:
+  - name: Collect facts
+    setup:
+
+
+- name: Init services resource
+  hosts: localhost
+  gather_facts: false
+  vars:
+    resource_file: "../cluster_init/conf/service-resource.json"
+    hosts_count: "{{ groups.kube_node | length }}"
+    hosts_min_memory: "{{ groups.kube_node | map('extract', hostvars, ['ansible_memtotal_mb']) | min }}"
+  roles:
+  - resource
+  tags: resource

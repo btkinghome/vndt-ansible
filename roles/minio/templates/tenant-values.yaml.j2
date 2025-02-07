@@ -1,7 +1,7 @@
 tenant:
   name: minio
   image:
-    repository: ailpha-registry:5000/{{ images.minio | split(':') | first }}
+    repository: easzlab.io.local:5000/{{ images.minio | split(':') | first }}
     tag: {{ images.minio | split(':') | last }}
     pullPolicy: IfNotPresent
   imagePullSecret: { }

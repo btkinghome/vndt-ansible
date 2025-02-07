@@ -1,5 +1,5 @@
 global:
-  imageRegistry: ailpha-registry:5000
+  imageRegistry: easzlab.io.local:5000
   imagePullSecrets: []
   storageClass: ""
   redis:
@@ -27,7 +27,7 @@ diagnosticMode:
 
 
 image:
-  registry: ailpha-registry:5000
+  registry: easzlab.io.local:5000
   repository: k8s/redis-sentinel
   tag: 7.2.4-debian-11-r3
   digest: ""
@@ -337,7 +337,7 @@ replica:
 sentinel:
   enabled: true
   image:
-    registry: ailpha-registry:5000
+    registry: easzlab.io.local:5000
     repository: k8s/redis/redis-sentinel
     tag: 7.2.4-debian-11-r3
     digest: ""

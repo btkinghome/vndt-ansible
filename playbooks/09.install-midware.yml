@@ -1,0 +1,26 @@
+# 创建ansible安装应用的playbook
+- name: Install apps on kubernetes
+  hosts: localhost
+  vars_files:
+  #  - /etc/ansible/cluster_init/conf/nacos-namespace.json
+    - ../cluster_init/conf/service-resource.json
+  vars:
+    # roles_list:
+    #   - kubesphere
+    #   - zookeeper
+    #   - elasticsearch
+    #   - kafka
+    #   - postgresql
+    #   - redis
+    #   - clickhouse
+    #   - nacos
+    #   #- argocd
+    #   - minio
+    kubeconfig: "/root/.kube/config"
+  tasks:
+    - name: Install roles
+      ansible.builtin.include_role:
+        name: "{{ item.name }}"
+      when: item.type == "midware"
+      with_items: "{{ services }}"
+  gather_facts: true

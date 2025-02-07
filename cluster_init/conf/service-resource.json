@@ -1,0 +1,68 @@
+{
+    "clusters": {
+        "HA": false,
+        "type":"standard"
+    },
+    "services": [
+        {
+            "config": {
+                "password": "hzda2e$dferq"
+            },
+            "deploy": {
+                "memory": "4Gi",
+                "replicas": 3
+            },
+            "expose": [],
+            "version": "ubi8-16.3-1",
+            "name": "postgresql",
+            "selector": {
+                "node-type": "postgresql"
+            },
+            "type": "midware"
+        },
+        {
+            "config": {
+                "password": "hzda*io2opekj"
+            },
+            "deploy": {
+                "memory": "4Gi",
+                "replicas": 3
+            },
+            "expose": [],
+            "version": "7.2.4-debian-11-r3",
+            "name": "redis",
+            "selector": {
+                "node-type": "redis"
+            },
+            "type": "midware"
+        },
+        {
+            "config": {},
+            "deploy": {
+                "memory": "2Gi",
+                "replicas": 4
+            },
+            "expose": [],
+            "version": "RELEASE.2024-08-03T04-33-23Z",
+            "name": "minio",
+            "selector": {
+                "node-type": "minio"
+            },
+            "type": "midware"
+        },
+        {
+            "config": {},
+            "deploy": {
+                "memory": "2Gi",
+                "replicas": 4
+            },
+            "expose": [],
+            "version": "3.13.4",
+            "name": "rabbitmq",
+            "selector": {
+                "node-type": "rabbitmq"
+            },
+            "type": "midware"
+        }
+    ]
+}

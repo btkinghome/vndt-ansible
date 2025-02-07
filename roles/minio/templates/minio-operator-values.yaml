@@ -52,7 +52,7 @@ operator:
   #      pullPolicy: IfNotPresent
   #
   image:
-    repository: ailpha-registry:5000/k8s/minio/operator
+    repository: easzlab.io.local:5000/k8s/minio/operator
     tag: v6.0.1
     pullPolicy: IfNotPresent
   ###
@@ -79,7 +79,7 @@ operator:
   #      pullPolicy: IfNotPresent
   #
   sidecarImage: 
-    repository: ailpha-registry:5000/k8s/minio/operator-sidecar
+    repository: easzlab.io.local:5000/k8s/minio/operator-sidecar
     tag: v6.0.0
     pullPolicy: IfNotPresent
   ###

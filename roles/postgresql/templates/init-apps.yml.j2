@@ -15,7 +15,7 @@ spec:
       restartPolicy: Never
       containers:  
       - name: init-pgsql-container
-        image: ailpha-registry:5000/{{ images.pgclient }}
+        image: easzlab.io.local:5000/{{ images.pgclient }}
         command: 
         - /bin/sh
         - -c

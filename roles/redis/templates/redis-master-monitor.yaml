@@ -39,7 +39,7 @@ spec:
             secretKeyRef: 
               name: redis
               key: redis-password
-        image: ailpha-registry:5000/k8s/redis/redis-sentinel-monitor:v1.7
+        image: easzlab.io.local:5000/k8s/redis/redis-sentinel-monitor:v1.7
         name: redis-sentinel-monitor
         command:
         - "sh"
